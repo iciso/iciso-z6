@@ -16,30 +16,57 @@ interface OrganizationCardProps {
 export function OrganizationCard({ organization }: OrganizationCardProps) {
   const [isModalOpen, setIsModalOpen] = useState(false)
 
-  const handleApply = (opportunityTitle: string) => {
-    const subject = `Volunteer/Internship Application - ${opportunityTitle}`
-    const body = `Dear ${organization.name} Team,
+  const handleApply = async (
+    opportunityTitle: string,
+    applicantData?: {
+      name: string
+      email: string
+      startDate: string
+      endDate: string
+      duration: string
+    },
+  ) => {
+    if (!applicantData) {
+      // If no applicant data provided, open modal for detailed application
+      setIsModalOpen(true)
+      return
+    }
 
-Assalamu Alaikum,
+    try {
+      const applicationData = {
+        applicantName: applicantData.name,
+        applicantEmail: applicantData.email,
+        organizationName: organization.name,
+        opportunityTitle: opportunityTitle,
+        opportunityType: organization.opportunities.find((opp) => opp.title === opportunityTitle)?.type || "volunteer",
+        location: organization.location,
+        focusArea: organization.themes.join(", "),
+        startDate: applicantData.startDate,
+        endDate: applicantData.endDate,
+        duration: applicantData.duration,
+      }
 
-I am writing to express my interest in the "${opportunityTitle}" opportunity at your organization.
+      const response = await fetch("/api/applications", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(applicationData),
+      })
 
-Please find my details below:
-- Name: [Your Full Name]
-- Email: [Your Email]
-- Phone: [Your Phone Number]
-- Preferred Duration: [Start Date] to [End Date]
-- Relevant Experience: [Brief description of relevant experience]
+      const result = await response.json()
 
-I am excited about the opportunity to contribute to your mission and would welcome the chance to discuss how I can support your important work.
-
-Jazak Allah Khair for your time and consideration.
-
-Best regards,
-[Your Name]`
-
-    const mailtoLink = `mailto:info@${organization.website.replace("https://", "").replace("http://", "")}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
-    window.open(mailtoLink, "_blank")
+      if (result.success) {
+        alert(
+          `Alhamdulillah! Your application has been submitted successfully. Application ID: ${result.applicationId}`,
+        )
+      } else {
+        alert("Sorry, there was an error submitting your application. Please try again.")
+      }
+    } catch (error) {
+      console.error("Error submitting application:", error)
+      alert("Sorry, there was an error submitting your application. Please try again.")
+    }
   }
 
   return (
@@ -114,7 +141,7 @@ Best regards,
               onClick={() => handleApply(organization.opportunities[0].title)}
             >
               <Mail className="h-4 w-4 mr-2" />
-              Quick Apply - {organization.opportunities[0].title}
+              Apply - {organization.opportunities[0].title}
             </Button>
           )}
         </CardFooter>

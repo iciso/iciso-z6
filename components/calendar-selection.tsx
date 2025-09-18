@@ -5,7 +5,10 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Calendar } from "@/components/ui/calendar"
-import { ArrowLeft, CalendarIcon, Clock, MapPin, Mail } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { ArrowLeft, CalendarIcon, Clock, MapPin, Send, User } from "lucide-react"
 import type { Organization, Opportunity } from "@/lib/data"
 
 interface CalendarSelectionProps {
@@ -13,7 +16,16 @@ interface CalendarSelectionProps {
   organization: Organization
   onBack: () => void
   onClose: () => void
-  onApply?: (opportunityTitle: string) => void
+  onApply?: (
+    opportunityTitle: string,
+    applicantData?: {
+      name: string
+      email: string
+      startDate: string
+      endDate: string
+      duration: string
+    },
+  ) => void
   startDate?: Date | null
   endDate?: Date | null
   onDateChange?: (start: Date | null, end: Date | null) => void
@@ -32,6 +44,11 @@ export function CalendarSelection({
   const [startDate, setStartDate] = useState<Date | undefined>(propStartDate || undefined)
   const [endDate, setEndDate] = useState<Date | undefined>(propEndDate || undefined)
   const [isSelectingEnd, setIsSelectingEnd] = useState(false)
+
+  const [applicantName, setApplicantName] = useState("")
+  const [applicantEmail, setApplicantEmail] = useState("")
+  const [motivation, setMotivation] = useState("")
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const handleDateSelect = (date: Date | undefined) => {
     if (!date) return
@@ -81,61 +98,32 @@ export function CalendarSelection({
     return `${Math.ceil(diffDays / 30)} months`
   }
 
-  const handleApplyWithEmail = () => {
-    if (!startDate || !endDate) return
+  const handleSubmitApplication = async () => {
+    if (!startDate || !endDate || !applicantName || !applicantEmail) return
 
-    const subject = `${opportunity.type === "volunteer" ? "Volunteer" : "Internship"} Application - ${opportunity.title}`
-    const body = `Assalamu Alaikum wa Rahmatullahi wa Barakatuh,
+    setIsSubmitting(true)
 
-Dear ${organization.name} Team,
+    try {
+      const applicationData = {
+        name: applicantName,
+        email: applicantEmail,
+        startDate: startDate.toISOString().split("T")[0],
+        endDate: endDate.toISOString().split("T")[0],
+        duration: calculateDuration() || "",
+      }
 
-I hope this message finds you in the best of health and Iman. I am writing to express my sincere interest in the "${opportunity.title}" ${opportunity.type} opportunity at your esteemed organization.
-
-APPLICATION DETAILS:
-• Position: ${opportunity.title}
-• Type: ${opportunity.type === "volunteer" ? "Volunteer Position" : "Internship Program"}
-• Preferred Start Date: ${formatDate(startDate)}
-• Preferred End Date: ${formatDate(endDate)}
-• Duration: ${calculateDuration()}
-• Location Preference: ${opportunity.remote ? "Remote" : "On-site"}
-
-PERSONAL INFORMATION:
-• Full Name: [Please enter your full name]
-• Email: [Please enter your email address]
-• Phone: [Please enter your phone number]
-• Location: [Please enter your current location]
-
-MOTIVATION & QUALIFICATIONS:
-I am deeply motivated to contribute to your organization's mission and believe this ${opportunity.type} opportunity aligns perfectly with my goals of serving the Muslim community. 
-
-[Please describe your relevant experience, skills, and motivation for applying to this specific opportunity]
-
-AVAILABILITY:
-I am available for the full duration mentioned above and can commit to the responsibilities outlined in the opportunity description.
-
-I would be honored to discuss my application further and am available for an interview at your convenience. Thank you for considering my application and for the important work your organization does for our community.
-
-Jazak Allah Khair for your time and consideration.
-
-Barakallahu feeki/feeka,
-[Your Name]
-
----
-This application was submitted through the ICISO Volunteer Matching Platform.
-Organization: ${organization.name}
-Website: ${organization.website}`
-
-    const emailAddress = "icisoi.club@gmail.com"
-    const mailtoLink = `mailto:${emailAddress}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
-
-    // Open email client
-    window.open(mailtoLink, "_blank")
-
-    // Close modal after sending
-    setTimeout(() => {
-      onClose()
-    }, 1000)
+      if (onApply) {
+        await onApply(opportunity.title, applicationData)
+        onClose()
+      }
+    } catch (error) {
+      console.error("Error submitting application:", error)
+    } finally {
+      setIsSubmitting(false)
+    }
   }
+
+  const isFormValid = startDate && endDate && applicantName.trim() && applicantEmail.trim()
 
   return (
     <div className="space-y-6">
@@ -144,34 +132,57 @@ Website: ${organization.website}`
         Back to Opportunities
       </Button>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <CalendarIcon className="h-5 w-5" />
-            Select Your {opportunity.type === "volunteer" ? "Volunteer" : "Internship"} Period
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid md:grid-cols-2 gap-6">
-            <div>
-              <h3 className="font-medium text-foreground mb-2">Opportunity Details</h3>
-              <div className="space-y-3 text-sm">
-                <div className="flex items-center gap-2">
-                  <Badge variant={opportunity.type === "volunteer" ? "default" : "secondary"}>{opportunity.type}</Badge>
-                  <Badge variant="outline">{opportunity.theme}</Badge>
-                </div>
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Clock className="h-4 w-4" />
-                  Suggested duration: {opportunity.duration}
-                </div>
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <MapPin className="h-4 w-4" />
-                  {opportunity.remote ? "Remote" : "On-site"}
+      <div className="grid md:grid-cols-2 gap-6">
+        {/* Calendar Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <CalendarIcon className="h-5 w-5" />
+              Select Your {opportunity.type === "volunteer" ? "Volunteer" : "Internship"} Period
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div>
+                <h3 className="font-medium text-foreground mb-2">Opportunity Details</h3>
+                <div className="space-y-3 text-sm">
+                  <div className="flex items-center gap-2">
+                    <Badge variant={opportunity.type === "volunteer" ? "default" : "secondary"}>
+                      {opportunity.type}
+                    </Badge>
+                    <Badge variant="outline">{opportunity.theme}</Badge>
+                  </div>
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Clock className="h-4 w-4" />
+                    Suggested duration: {opportunity.duration}
+                  </div>
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <MapPin className="h-4 w-4" />
+                    {opportunity.remote ? "Remote" : "On-site"}
+                  </div>
                 </div>
               </div>
 
+              <div className="mb-4">
+                <p className="text-sm text-muted-foreground mb-2">
+                  {!startDate
+                    ? "Select your start date"
+                    : !endDate
+                      ? "Select your end date"
+                      : "Adjust your dates if needed"}
+                </p>
+              </div>
+
+              <Calendar
+                mode="single"
+                selected={isSelectingEnd ? endDate : startDate}
+                onSelect={handleDateSelect}
+                disabled={(date) => date < new Date()}
+                className="rounded-md border"
+              />
+
               {(startDate || endDate) && (
-                <div className="mt-6 p-4 bg-muted rounded-lg">
+                <div className="p-4 bg-muted rounded-lg">
                   <h4 className="font-medium text-foreground mb-2">Selected Period</h4>
                   <div className="space-y-2 text-sm">
                     {startDate && (
@@ -196,39 +207,86 @@ Website: ${organization.website}`
                 </div>
               )}
             </div>
+          </CardContent>
+        </Card>
 
-            <div>
-              <div className="mb-4">
-                <p className="text-sm text-muted-foreground mb-2">
-                  {!startDate
-                    ? "Select your start date"
-                    : !endDate
-                      ? "Select your end date"
-                      : "Adjust your dates if needed"}
-                </p>
+        {/* Application Form Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <User className="h-5 w-5" />
+              Application Details
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="name">Full Name *</Label>
+                <Input
+                  id="name"
+                  value={applicantName}
+                  onChange={(e) => setApplicantName(e.target.value)}
+                  placeholder="Enter your full name"
+                  className="mt-1"
+                />
               </div>
 
-              <Calendar
-                mode="single"
-                selected={isSelectingEnd ? endDate : startDate}
-                onSelect={handleDateSelect}
-                disabled={(date) => date < new Date()}
-                className="rounded-md border"
-              />
-            </div>
-          </div>
+              <div>
+                <Label htmlFor="email">Email Address *</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={applicantEmail}
+                  onChange={(e) => setApplicantEmail(e.target.value)}
+                  placeholder="Enter your email address"
+                  className="mt-1"
+                />
+              </div>
 
-          <div className="flex gap-3 mt-6">
-            <Button className="flex-1" onClick={handleApplyWithEmail} disabled={!startDate || !endDate}>
-              <Mail className="mr-2 h-4 w-4" />
-              Send Application Email
-            </Button>
-            <Button variant="outline" onClick={onBack}>
-              Cancel
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+              <div>
+                <Label htmlFor="motivation">Motivation & Experience (Optional)</Label>
+                <Textarea
+                  id="motivation"
+                  value={motivation}
+                  onChange={(e) => setMotivation(e.target.value)}
+                  placeholder="Tell us why you're interested in this opportunity and any relevant experience..."
+                  className="mt-1 min-h-[100px]"
+                />
+              </div>
+
+              <div className="p-4 bg-emerald-50 rounded-lg border border-emerald-200">
+                <h4 className="font-medium text-emerald-900 mb-2">Application Summary</h4>
+                <div className="space-y-1 text-sm text-emerald-800">
+                  <div>
+                    <strong>Organization:</strong> {organization.name}
+                  </div>
+                  <div>
+                    <strong>Position:</strong> {opportunity.title}
+                  </div>
+                  <div>
+                    <strong>Type:</strong> {opportunity.type}
+                  </div>
+                  {startDate && endDate && (
+                    <div>
+                      <strong>Duration:</strong> {calculateDuration()}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <Button className="flex-1" onClick={handleSubmitApplication} disabled={!isFormValid || isSubmitting}>
+                  <Send className="mr-2 h-4 w-4" />
+                  {isSubmitting ? "Submitting..." : "Submit Application"}
+                </Button>
+                <Button variant="outline" onClick={onBack}>
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }

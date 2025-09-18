@@ -5,8 +5,10 @@
   "scripts": {
     "build": "next build",
     "dev": "next dev",
+    "export-applications": "node scripts/export-applications.js",
     "lint": "next lint",
-    "start": "next start"
+    "start": "next start",
+    "view-applications": "node scripts/view-applications.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
@@ -44,11 +46,13 @@
     "cmdk": "1.0.4",
     "date-fns": "4.1.0",
     "embla-carousel-react": "8.5.1",
+    "fs": "latest",
     "geist": "latest",
     "input-otp": "1.4.1",
     "lucide-react": "^0.454.0",
     "next": "14.2.16",
     "next-themes": "latest",
+    "path": "latest",
     "react": "^18",
     "react-day-picker": "latest",
     "react-dom": "^18",
