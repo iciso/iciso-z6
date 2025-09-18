@@ -14,9 +14,10 @@ interface OpportunityModalProps {
   organization: Organization
   isOpen: boolean
   onClose: () => void
+  onApply?: (opportunityTitle: string) => void
 }
 
-export function OpportunityModal({ organization, isOpen, onClose }: OpportunityModalProps) {
+export function OpportunityModal({ organization, isOpen, onClose, onApply }: OpportunityModalProps) {
   const [selectedOpportunity, setSelectedOpportunity] = useState<Opportunity | null>(null)
   const [showCalendar, setShowCalendar] = useState(false)
 
@@ -119,6 +120,7 @@ export function OpportunityModal({ organization, isOpen, onClose }: OpportunityM
               organization={organization}
               onBack={handleBackToList}
               onClose={onClose}
+              onApply={onApply}
             />
           )
         )}

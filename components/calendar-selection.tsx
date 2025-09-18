@@ -5,22 +5,33 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Calendar } from "@/components/ui/calendar"
-import { ArrowLeft, CalendarIcon, Clock, MapPin, ArrowRight } from "lucide-react"
+import { ArrowLeft, CalendarIcon, Clock, MapPin, Mail } from "lucide-react"
 import type { Organization, Opportunity } from "@/lib/data"
-import { ApplicationForm } from "@/components/application-form"
 
 interface CalendarSelectionProps {
   opportunity: Opportunity
   organization: Organization
   onBack: () => void
   onClose: () => void
+  onApply?: (opportunityTitle: string) => void
+  startDate?: Date | null
+  endDate?: Date | null
+  onDateChange?: (start: Date | null, end: Date | null) => void
 }
 
-export function CalendarSelection({ opportunity, organization, onBack, onClose }: CalendarSelectionProps) {
-  const [startDate, setStartDate] = useState<Date | undefined>(undefined)
-  const [endDate, setEndDate] = useState<Date | undefined>(undefined)
+export function CalendarSelection({
+  opportunity,
+  organization,
+  onBack,
+  onClose,
+  onApply,
+  startDate: propStartDate,
+  endDate: propEndDate,
+  onDateChange,
+}: CalendarSelectionProps) {
+  const [startDate, setStartDate] = useState<Date | undefined>(propStartDate || undefined)
+  const [endDate, setEndDate] = useState<Date | undefined>(propEndDate || undefined)
   const [isSelectingEnd, setIsSelectingEnd] = useState(false)
-  const [showApplicationForm, setShowApplicationForm] = useState(false)
 
   const handleDateSelect = (date: Date | undefined) => {
     if (!date) return
@@ -29,14 +40,17 @@ export function CalendarSelection({ opportunity, organization, onBack, onClose }
       if (!startDate) {
         setStartDate(date)
         setIsSelectingEnd(true)
+        onDateChange?.(date, null)
       } else {
         if (date >= startDate) {
           setEndDate(date)
           setIsSelectingEnd(false)
+          onDateChange?.(startDate, date)
         } else {
           // If selected date is before start date, make it the new start date
           setStartDate(date)
           setEndDate(undefined)
+          onDateChange?.(date, null)
         }
       }
     } else {
@@ -44,6 +58,7 @@ export function CalendarSelection({ opportunity, organization, onBack, onClose }
       setStartDate(date)
       setEndDate(undefined)
       setIsSelectingEnd(true)
+      onDateChange?.(date, null)
     }
   }
 
@@ -66,27 +81,61 @@ export function CalendarSelection({ opportunity, organization, onBack, onClose }
     return `${Math.ceil(diffDays / 30)} months`
   }
 
-  const handleContinueToApplication = () => {
-    if (startDate && endDate) {
-      setShowApplicationForm(true)
-    }
-  }
+  const handleApplyWithEmail = () => {
+    if (!startDate || !endDate) return
 
-  const handleBackFromApplication = () => {
-    setShowApplicationForm(false)
-  }
+    const subject = `${opportunity.type === "volunteer" ? "Volunteer" : "Internship"} Application - ${opportunity.title}`
+    const body = `Assalamu Alaikum wa Rahmatullahi wa Barakatuh,
 
-  if (showApplicationForm && startDate && endDate) {
-    return (
-      <ApplicationForm
-        opportunity={opportunity}
-        organization={organization}
-        startDate={startDate}
-        endDate={endDate}
-        onBack={handleBackFromApplication}
-        onClose={onClose}
-      />
-    )
+Dear ${organization.name} Team,
+
+I hope this message finds you in the best of health and Iman. I am writing to express my sincere interest in the "${opportunity.title}" ${opportunity.type} opportunity at your esteemed organization.
+
+APPLICATION DETAILS:
+• Position: ${opportunity.title}
+• Type: ${opportunity.type === "volunteer" ? "Volunteer Position" : "Internship Program"}
+• Preferred Start Date: ${formatDate(startDate)}
+• Preferred End Date: ${formatDate(endDate)}
+• Duration: ${calculateDuration()}
+• Location Preference: ${opportunity.remote ? "Remote" : "On-site"}
+
+PERSONAL INFORMATION:
+• Full Name: [Please enter your full name]
+• Email: [Please enter your email address]
+• Phone: [Please enter your phone number]
+• Location: [Please enter your current location]
+
+MOTIVATION & QUALIFICATIONS:
+I am deeply motivated to contribute to your organization's mission and believe this ${opportunity.type} opportunity aligns perfectly with my goals of serving the Muslim community. 
+
+[Please describe your relevant experience, skills, and motivation for applying to this specific opportunity]
+
+AVAILABILITY:
+I am available for the full duration mentioned above and can commit to the responsibilities outlined in the opportunity description.
+
+I would be honored to discuss my application further and am available for an interview at your convenience. Thank you for considering my application and for the important work your organization does for our community.
+
+Jazak Allah Khair for your time and consideration.
+
+Barakallahu feeki/feeka,
+[Your Name]
+
+---
+This application was submitted through the ICISO Volunteer Matching Platform.
+Organization: ${organization.name}
+Website: ${organization.website}`
+
+    // Create email link
+    const emailAddress = `info@${organization.website.replace("https://", "").replace("http://", "").split("/")[0]}`
+    const mailtoLink = `mailto:${emailAddress}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
+
+    // Open email client
+    window.open(mailtoLink, "_blank")
+
+    // Close modal after sending
+    setTimeout(() => {
+      onClose()
+    }, 1000)
   }
 
   return (
@@ -171,9 +220,9 @@ export function CalendarSelection({ opportunity, organization, onBack, onClose }
           </div>
 
           <div className="flex gap-3 mt-6">
-            <Button className="flex-1" onClick={handleContinueToApplication} disabled={!startDate || !endDate}>
-              Continue to Application
-              <ArrowRight className="ml-2 h-4 w-4" />
+            <Button className="flex-1" onClick={handleApplyWithEmail} disabled={!startDate || !endDate}>
+              <Mail className="mr-2 h-4 w-4" />
+              Send Application Email
             </Button>
             <Button variant="outline" onClick={onBack}>
               Cancel

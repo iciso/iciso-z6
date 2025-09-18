@@ -1,6 +1,12 @@
+"use client"
+
 import { Button } from "@/components/ui/button"
 
-export function HeroSection() {
+interface HeroSectionProps {
+  onFindOpportunities?: () => void
+}
+
+export function HeroSection({ onFindOpportunities }: HeroSectionProps) {
   return (
     <section className="bg-gradient-to-b from-primary/5 to-background py-16 md:py-24">
       <div className="container mx-auto px-4 text-center">
@@ -12,7 +18,7 @@ export function HeroSection() {
           opportunities in Quranic Studies, Dawah, and community service.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Button size="lg" className="text-lg px-8">
+          <Button size="lg" className="text-lg px-8" onClick={onFindOpportunities}>
             Find Opportunities
           </Button>
           <Button size="lg" variant="outline" className="text-lg px-8 bg-transparent">

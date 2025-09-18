@@ -5,7 +5,7 @@ import Image from "next/image"
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { MapPin, Globe, Calendar, Users } from "lucide-react"
+import { MapPin, Globe, Calendar, Users, Mail } from "lucide-react"
 import type { Organization } from "@/lib/data"
 import { OpportunityModal } from "@/components/opportunity-modal"
 
@@ -15,6 +15,32 @@ interface OrganizationCardProps {
 
 export function OrganizationCard({ organization }: OrganizationCardProps) {
   const [isModalOpen, setIsModalOpen] = useState(false)
+
+  const handleApply = (opportunityTitle: string) => {
+    const subject = `Volunteer/Internship Application - ${opportunityTitle}`
+    const body = `Dear ${organization.name} Team,
+
+Assalamu Alaikum,
+
+I am writing to express my interest in the "${opportunityTitle}" opportunity at your organization.
+
+Please find my details below:
+- Name: [Your Full Name]
+- Email: [Your Email]
+- Phone: [Your Phone Number]
+- Preferred Duration: [Start Date] to [End Date]
+- Relevant Experience: [Brief description of relevant experience]
+
+I am excited about the opportunity to contribute to your mission and would welcome the chance to discuss how I can support your important work.
+
+Jazak Allah Khair for your time and consideration.
+
+Best regards,
+[Your Name]`
+
+    const mailtoLink = `mailto:info@${organization.website.replace("https://", "").replace("http://", "")}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
+    window.open(mailtoLink, "_blank")
+  }
 
   return (
     <>
@@ -76,14 +102,30 @@ export function OrganizationCard({ organization }: OrganizationCardProps) {
           </div>
         </CardContent>
 
-        <CardFooter>
+        <CardFooter className="space-y-2">
           <Button className="w-full" size="lg" onClick={() => setIsModalOpen(true)}>
             View Opportunities
           </Button>
+          {organization.opportunities.length > 0 && (
+            <Button
+              variant="outline"
+              className="w-full bg-transparent"
+              size="sm"
+              onClick={() => handleApply(organization.opportunities[0].title)}
+            >
+              <Mail className="h-4 w-4 mr-2" />
+              Quick Apply - {organization.opportunities[0].title}
+            </Button>
+          )}
         </CardFooter>
       </Card>
 
-      <OpportunityModal organization={organization} isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+      <OpportunityModal
+        organization={organization}
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onApply={handleApply}
+      />
     </>
   )
 }
