@@ -1,12 +1,20 @@
 const fs = require("fs").promises
 const path = require("path")
+const fetch = require("node-fetch")
 
 const APPLICATIONS_FILE = path.join(process.cwd(), "data", "applications.json")
 
 async function exportApplications() {
   try {
-    const data = await fs.readFile(APPLICATIONS_FILE, "utf-8")
-    const applications = JSON.parse(data)
+    const response = await fetch("http://localhost:3000/api/applications")
+    const data = await response.json()
+
+    if (!data.success) {
+      console.log("Error fetching applications:", data.message)
+      return
+    }
+
+    const applications = data.applications
 
     if (applications.length === 0) {
       console.log("No applications to export.")
@@ -51,8 +59,15 @@ async function exportApplications() {
       ),
     ].join("\n")
 
+    const exportsDir = path.join(process.cwd(), "exports")
+    try {
+      await fs.mkdir(exportsDir, { recursive: true })
+    } catch (error) {
+      // Directory might already exist
+    }
+
     // Save CSV file
-    const csvFile = path.join(process.cwd(), "data", `applications-export-${Date.now()}.csv`)
+    const csvFile = path.join(exportsDir, `applications-export-${Date.now()}.csv`)
     await fs.writeFile(csvFile, csvContent)
 
     console.log("🕌 ICISO Applications Export Complete")
@@ -63,7 +78,8 @@ async function exportApplications() {
     if (error.code === "ENOENT") {
       console.log("No applications file found.")
     } else {
-      console.error("Error exporting applications:", error.message)
+      console.log("Error connecting to application server. Make sure the server is running on http://localhost:3000")
+      console.error("Error details:", error.message)
     }
   }
 }

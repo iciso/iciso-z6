@@ -1,7 +1,4 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { writeFile, readFile, mkdir } from "fs/promises"
-import { existsSync } from "fs"
-import path from "path"
 
 interface Application {
   id: string
@@ -19,38 +16,7 @@ interface Application {
   status: "pending" | "reviewed" | "accepted" | "rejected"
 }
 
-const APPLICATIONS_DIR = path.join(process.cwd(), "data")
-const APPLICATIONS_FILE = path.join(APPLICATIONS_DIR, "applications.json")
-
-async function ensureDataDirectory() {
-  if (!existsSync(APPLICATIONS_DIR)) {
-    await mkdir(APPLICATIONS_DIR, { recursive: true })
-  }
-}
-
-async function getApplications(): Promise<Application[]> {
-  try {
-    await ensureDataDirectory()
-    if (!existsSync(APPLICATIONS_FILE)) {
-      return []
-    }
-    const data = await readFile(APPLICATIONS_FILE, "utf-8")
-    return JSON.parse(data)
-  } catch (error) {
-    console.error("Error reading applications:", error)
-    return []
-  }
-}
-
-async function saveApplications(applications: Application[]) {
-  try {
-    await ensureDataDirectory()
-    await writeFile(APPLICATIONS_FILE, JSON.stringify(applications, null, 2))
-  } catch (error) {
-    console.error("Error saving applications:", error)
-    throw error
-  }
-}
+const applications: Application[] = []
 
 export async function POST(request: NextRequest) {
   try {
@@ -59,44 +25,70 @@ export async function POST(request: NextRequest) {
     const applicationData = await request.json()
     console.log("[v0] Received application data:", applicationData)
 
+    const requiredFields = ["applicantName", "applicantEmail", "organizationName", "opportunityTitle"]
+    for (const field of requiredFields) {
+      if (!applicationData[field]) {
+        console.error(`[v0] Missing required field: ${field}`)
+        return NextResponse.json({ success: false, message: `Missing required field: ${field}` }, { status: 400 })
+      }
+    }
+
     const newApplication: Application = {
       id: `app_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       timestamp: new Date().toISOString(),
       status: "pending",
-      ...applicationData,
+      applicantName: applicationData.applicantName,
+      applicantEmail: applicationData.applicantEmail,
+      organizationName: applicationData.organizationName,
+      opportunityTitle: applicationData.opportunityTitle,
+      opportunityType: applicationData.opportunityType || "volunteer",
+      location: applicationData.location || "",
+      focusArea: applicationData.focusArea || "",
+      startDate: applicationData.startDate || "",
+      endDate: applicationData.endDate || "",
+      duration: applicationData.duration || "",
     }
 
     console.log("[v0] Created new application object:", newApplication)
 
-    const applications = await getApplications()
-    console.log("[v0] Current applications count:", applications.length)
-
     applications.push(newApplication)
-    await saveApplications(applications)
 
-    console.log("[v0] Application saved successfully, new count:", applications.length)
-
+    console.log("[v0] Application saved successfully, total count:", applications.length)
     console.log(
       `[ICISO] New application received from ${newApplication.applicantName} for ${newApplication.organizationName}`,
     )
 
     return NextResponse.json({
       success: true,
-      message: "Application submitted successfully",
+      message: "Application submitted successfully! Thank you for your interest in volunteering.",
       applicationId: newApplication.id,
     })
   } catch (error) {
     console.error("[v0] Error processing application:", error)
-    return NextResponse.json({ success: false, message: "Failed to submit application" }, { status: 500 })
+    console.error("[v0] Error stack:", error instanceof Error ? error.stack : "Unknown error")
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Failed to submit application. Please try again.",
+        error: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 500 },
+    )
   }
 }
 
 export async function GET() {
   try {
-    const applications = await getApplications()
-    return NextResponse.json({ success: true, applications })
+    console.log("[v0] API route called - GET /api/applications")
+    console.log("[v0] Current applications count:", applications.length)
+
+    return NextResponse.json({
+      success: true,
+      applications,
+      count: applications.length,
+    })
   } catch (error) {
-    console.error("Error fetching applications:", error)
+    console.error("[v0] Error fetching applications:", error)
     return NextResponse.json({ success: false, message: "Failed to fetch applications" }, { status: 500 })
   }
 }

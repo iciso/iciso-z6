@@ -1,5 +1,6 @@
 const fs = require("fs").promises
 const path = require("path")
+const fetch = require("node-fetch")
 
 const APPLICATIONS_FILE = path.join(process.cwd(), "data", "applications.json")
 
@@ -8,8 +9,15 @@ async function viewApplications() {
     console.log("🕌 ICISO Volunteer Applications Report")
     console.log("=====================================\n")
 
-    const data = await fs.readFile(APPLICATIONS_FILE, "utf-8")
-    const applications = JSON.parse(data)
+    const response = await fetch("http://localhost:3000/api/applications")
+    const data = await response.json()
+
+    if (!data.success) {
+      console.log("Error fetching applications:", data.message)
+      return
+    }
+
+    const applications = data.applications
 
     if (applications.length === 0) {
       console.log("No applications found.")
@@ -65,7 +73,8 @@ async function viewApplications() {
     if (error.code === "ENOENT") {
       console.log("No applications file found. No applications have been submitted yet.")
     } else {
-      console.error("Error reading applications:", error.message)
+      console.log("Error connecting to application server. Make sure the server is running on http://localhost:3000")
+      console.error("Error details:", error.message)
     }
   }
 }

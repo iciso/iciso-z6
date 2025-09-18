@@ -100,8 +100,6 @@ export function CalendarSelection({
         duration: calculateDuration() || "",
       }
 
-      console.log("[v0] Submitting application data:", applicationData)
-
       const response = await fetch("/api/applications", {
         method: "POST",
         headers: {
@@ -110,22 +108,21 @@ export function CalendarSelection({
         body: JSON.stringify(applicationData),
       })
 
-      console.log("[v0] API response status:", response.status)
       const result = await response.json()
-      console.log("[v0] API response data:", result)
 
       if (result.success) {
         alert(
-          `Alhamdulillah! Your application has been submitted successfully. Application ID: ${result.applicationId}`,
+          `Alhamdulillah! Your application has been submitted successfully.\n\nApplication ID: ${result.applicationId}\n\nYou will be contacted at ${applicantEmail} regarding next steps.\n\nBarakAllahu feekum for your interest in volunteering!`,
         )
         onClose()
       } else {
-        alert("Sorry, there was an error submitting your application. Please try again.")
-        console.error("[v0] Application submission failed:", result)
+        alert(
+          `Sorry, there was an error submitting your application: ${result.message || "Unknown error"}. Please try again.`,
+        )
       }
     } catch (error) {
-      console.error("[v0] Error submitting application:", error)
-      alert("Sorry, there was an error submitting your application. Please try again.")
+      console.error("Application submission error:", error)
+      alert("Sorry, there was a network error submitting your application. Please check your connection and try again.")
     } finally {
       setIsSubmitting(false)
     }
