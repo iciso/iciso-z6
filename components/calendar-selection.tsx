@@ -1,0 +1,186 @@
+"use client"
+
+import { useState } from "react"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Calendar } from "@/components/ui/calendar"
+import { ArrowLeft, CalendarIcon, Clock, MapPin, ArrowRight } from "lucide-react"
+import type { Organization, Opportunity } from "@/lib/data"
+import { ApplicationForm } from "@/components/application-form"
+
+interface CalendarSelectionProps {
+  opportunity: Opportunity
+  organization: Organization
+  onBack: () => void
+  onClose: () => void
+}
+
+export function CalendarSelection({ opportunity, organization, onBack, onClose }: CalendarSelectionProps) {
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined)
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined)
+  const [isSelectingEnd, setIsSelectingEnd] = useState(false)
+  const [showApplicationForm, setShowApplicationForm] = useState(false)
+
+  const handleDateSelect = (date: Date | undefined) => {
+    if (!date) return
+
+    if (!startDate || isSelectingEnd) {
+      if (!startDate) {
+        setStartDate(date)
+        setIsSelectingEnd(true)
+      } else {
+        if (date >= startDate) {
+          setEndDate(date)
+          setIsSelectingEnd(false)
+        } else {
+          // If selected date is before start date, make it the new start date
+          setStartDate(date)
+          setEndDate(undefined)
+        }
+      }
+    } else {
+      // If start date is selected and we're not selecting end, reset
+      setStartDate(date)
+      setEndDate(undefined)
+      setIsSelectingEnd(true)
+    }
+  }
+
+  const formatDate = (date: Date) => {
+    return date.toLocaleDateString("en-US", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    })
+  }
+
+  const calculateDuration = () => {
+    if (!startDate || !endDate) return null
+    const diffTime = Math.abs(endDate.getTime() - startDate.getTime())
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1
+
+    if (diffDays < 7) return `${diffDays} days`
+    if (diffDays < 30) return `${Math.ceil(diffDays / 7)} weeks`
+    return `${Math.ceil(diffDays / 30)} months`
+  }
+
+  const handleContinueToApplication = () => {
+    if (startDate && endDate) {
+      setShowApplicationForm(true)
+    }
+  }
+
+  const handleBackFromApplication = () => {
+    setShowApplicationForm(false)
+  }
+
+  if (showApplicationForm && startDate && endDate) {
+    return (
+      <ApplicationForm
+        opportunity={opportunity}
+        organization={organization}
+        startDate={startDate}
+        endDate={endDate}
+        onBack={handleBackFromApplication}
+        onClose={onClose}
+      />
+    )
+  }
+
+  return (
+    <div className="space-y-6">
+      <Button variant="ghost" onClick={onBack} className="mb-4">
+        <ArrowLeft className="mr-2 h-4 w-4" />
+        Back to Opportunities
+      </Button>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <CalendarIcon className="h-5 w-5" />
+            Select Your {opportunity.type === "volunteer" ? "Volunteer" : "Internship"} Period
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid md:grid-cols-2 gap-6">
+            <div>
+              <h3 className="font-medium text-foreground mb-2">Opportunity Details</h3>
+              <div className="space-y-3 text-sm">
+                <div className="flex items-center gap-2">
+                  <Badge variant={opportunity.type === "volunteer" ? "default" : "secondary"}>{opportunity.type}</Badge>
+                  <Badge variant="outline">{opportunity.theme}</Badge>
+                </div>
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Clock className="h-4 w-4" />
+                  Suggested duration: {opportunity.duration}
+                </div>
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <MapPin className="h-4 w-4" />
+                  {opportunity.remote ? "Remote" : "On-site"}
+                </div>
+              </div>
+
+              {(startDate || endDate) && (
+                <div className="mt-6 p-4 bg-muted rounded-lg">
+                  <h4 className="font-medium text-foreground mb-2">Selected Period</h4>
+                  <div className="space-y-2 text-sm">
+                    {startDate && (
+                      <div>
+                        <span className="text-muted-foreground">Start: </span>
+                        <span className="font-medium">{formatDate(startDate)}</span>
+                      </div>
+                    )}
+                    {endDate && (
+                      <div>
+                        <span className="text-muted-foreground">End: </span>
+                        <span className="font-medium">{formatDate(endDate)}</span>
+                      </div>
+                    )}
+                    {startDate && endDate && (
+                      <div>
+                        <span className="text-muted-foreground">Duration: </span>
+                        <span className="font-medium">{calculateDuration()}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div>
+              <div className="mb-4">
+                <p className="text-sm text-muted-foreground mb-2">
+                  {!startDate
+                    ? "Select your start date"
+                    : !endDate
+                      ? "Select your end date"
+                      : "Adjust your dates if needed"}
+                </p>
+              </div>
+
+              <Calendar
+                mode="single"
+                selected={isSelectingEnd ? endDate : startDate}
+                onSelect={handleDateSelect}
+                disabled={(date) => date < new Date()}
+                className="rounded-md border"
+              />
+            </div>
+          </div>
+
+          <div className="flex gap-3 mt-6">
+            <Button className="flex-1" onClick={handleContinueToApplication} disabled={!startDate || !endDate}>
+              Continue to Application
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+            <Button variant="outline" onClick={onBack}>
+              Cancel
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
