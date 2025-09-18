@@ -125,8 +125,7 @@ This application was submitted through the ICISO Volunteer Matching Platform.
 Organization: ${organization.name}
 Website: ${organization.website}`
 
-    // Create email link
-    const emailAddress = `info@${organization.website.replace("https://", "").replace("http://", "").split("/")[0]}`
+    const emailAddress = "icisoi.club@gmail.com"
     const mailtoLink = `mailto:${emailAddress}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
 
     // Open email client

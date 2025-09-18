@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { CalendarSelection } from "@/components/calendar-selection"
+import { SimpleCalendar } from "@/components/simple-calendar"
 import { MapPin, BookOpen, Calendar, Search } from "lucide-react"
 
 interface GuidedSearchProps {
@@ -157,7 +157,7 @@ export function GuidedSearch({ onSearch }: GuidedSearchProps) {
                 <Calendar className="h-4 w-4 text-primary" />
                 <label className="text-sm font-medium text-foreground">Step 3: Select Duration</label>
               </div>
-              <CalendarSelection onDateChange={handleDateSelection} startDate={startDate} endDate={endDate} />
+              <SimpleCalendar onDateChange={handleDateSelection} startDate={startDate} endDate={endDate} />
               {startDate && endDate && (
                 <Badge variant="secondary" className="w-fit">
                   Duration: {startDate.toLocaleDateString()} - {endDate.toLocaleDateString()}
