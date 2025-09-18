@@ -16,19 +16,8 @@ interface CalendarSelectionProps {
   organization: Organization
   onBack: () => void
   onClose: () => void
-  onApply?: (
-    opportunityTitle: string,
-    applicantData?: {
-      name: string
-      email: string
-      startDate: string
-      endDate: string
-      duration: string
-    },
-  ) => void
   startDate?: Date | null
   endDate?: Date | null
-  onDateChange?: (start: Date | null, end: Date | null) => void
 }
 
 export function CalendarSelection({
@@ -36,10 +25,8 @@ export function CalendarSelection({
   organization,
   onBack,
   onClose,
-  onApply,
   startDate: propStartDate,
   endDate: propEndDate,
-  onDateChange,
 }: CalendarSelectionProps) {
   const [startDate, setStartDate] = useState<Date | undefined>(propStartDate || undefined)
   const [endDate, setEndDate] = useState<Date | undefined>(propEndDate || undefined)
@@ -57,17 +44,14 @@ export function CalendarSelection({
       if (!startDate) {
         setStartDate(date)
         setIsSelectingEnd(true)
-        onDateChange?.(date, null)
       } else {
         if (date >= startDate) {
           setEndDate(date)
           setIsSelectingEnd(false)
-          onDateChange?.(startDate, date)
         } else {
           // If selected date is before start date, make it the new start date
           setStartDate(date)
           setEndDate(undefined)
-          onDateChange?.(date, null)
         }
       }
     } else {
@@ -75,7 +59,6 @@ export function CalendarSelection({
       setStartDate(date)
       setEndDate(undefined)
       setIsSelectingEnd(true)
-      onDateChange?.(date, null)
     }
   }
 
@@ -105,19 +88,44 @@ export function CalendarSelection({
 
     try {
       const applicationData = {
-        name: applicantName,
-        email: applicantEmail,
+        applicantName: applicantName,
+        applicantEmail: applicantEmail,
+        organizationName: organization.name,
+        opportunityTitle: opportunity.title,
+        opportunityType: opportunity.type,
+        location: organization.location,
+        focusArea: organization.themes.join(", "),
         startDate: startDate.toISOString().split("T")[0],
         endDate: endDate.toISOString().split("T")[0],
         duration: calculateDuration() || "",
       }
 
-      if (onApply) {
-        await onApply(opportunity.title, applicationData)
+      console.log("[v0] Submitting application data:", applicationData)
+
+      const response = await fetch("/api/applications", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(applicationData),
+      })
+
+      console.log("[v0] API response status:", response.status)
+      const result = await response.json()
+      console.log("[v0] API response data:", result)
+
+      if (result.success) {
+        alert(
+          `Alhamdulillah! Your application has been submitted successfully. Application ID: ${result.applicationId}`,
+        )
         onClose()
+      } else {
+        alert("Sorry, there was an error submitting your application. Please try again.")
+        console.error("[v0] Application submission failed:", result)
       }
     } catch (error) {
-      console.error("Error submitting application:", error)
+      console.error("[v0] Error submitting application:", error)
+      alert("Sorry, there was an error submitting your application. Please try again.")
     } finally {
       setIsSubmitting(false)
     }

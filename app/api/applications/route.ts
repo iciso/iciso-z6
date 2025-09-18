@@ -54,7 +54,10 @@ async function saveApplications(applications: Application[]) {
 
 export async function POST(request: NextRequest) {
   try {
+    console.log("[v0] API route called - POST /api/applications")
+
     const applicationData = await request.json()
+    console.log("[v0] Received application data:", applicationData)
 
     const newApplication: Application = {
       id: `app_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -63,9 +66,15 @@ export async function POST(request: NextRequest) {
       ...applicationData,
     }
 
+    console.log("[v0] Created new application object:", newApplication)
+
     const applications = await getApplications()
+    console.log("[v0] Current applications count:", applications.length)
+
     applications.push(newApplication)
     await saveApplications(applications)
+
+    console.log("[v0] Application saved successfully, new count:", applications.length)
 
     console.log(
       `[ICISO] New application received from ${newApplication.applicantName} for ${newApplication.organizationName}`,
@@ -77,7 +86,7 @@ export async function POST(request: NextRequest) {
       applicationId: newApplication.id,
     })
   } catch (error) {
-    console.error("Error processing application:", error)
+    console.error("[v0] Error processing application:", error)
     return NextResponse.json({ success: false, message: "Failed to submit application" }, { status: 500 })
   }
 }
