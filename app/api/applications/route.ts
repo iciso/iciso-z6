@@ -1,4 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
+import { promises as fs } from "fs"
+import path from "path"
 
 interface Application {
   id: string
@@ -17,6 +19,35 @@ interface Application {
 }
 
 const applications: Application[] = []
+const DATA_DIR = path.join(process.cwd(), "data")
+const APPLICATIONS_FILE = path.join(DATA_DIR, "applications.json")
+
+async function ensureDataDirectory() {
+  try {
+    await fs.access(DATA_DIR)
+  } catch {
+    await fs.mkdir(DATA_DIR, { recursive: true })
+  }
+}
+
+async function loadApplicationsFromFile(): Promise<Application[]> {
+  try {
+    await ensureDataDirectory()
+    const data = await fs.readFile(APPLICATIONS_FILE, "utf-8")
+    return JSON.parse(data)
+  } catch {
+    return []
+  }
+}
+
+async function saveApplicationsToFile(applications: Application[]) {
+  try {
+    await ensureDataDirectory()
+    await fs.writeFile(APPLICATIONS_FILE, JSON.stringify(applications, null, 2))
+  } catch (error) {
+    console.error("[v0] Error saving applications to file:", error)
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -51,7 +82,11 @@ export async function POST(request: NextRequest) {
 
     console.log("[v0] Created new application object:", newApplication)
 
+    const existingApplications = await loadApplicationsFromFile()
+    existingApplications.push(newApplication)
+
     applications.push(newApplication)
+    await saveApplicationsToFile(existingApplications)
 
     console.log("[v0] Application saved successfully, total count:", applications.length)
     console.log(
@@ -80,12 +115,14 @@ export async function POST(request: NextRequest) {
 export async function GET() {
   try {
     console.log("[v0] API route called - GET /api/applications")
-    console.log("[v0] Current applications count:", applications.length)
+
+    const fileApplications = await loadApplicationsFromFile()
+    console.log("[v0] Applications loaded from file:", fileApplications.length)
 
     return NextResponse.json({
       success: true,
-      applications,
-      count: applications.length,
+      applications: fileApplications,
+      count: fileApplications.length,
     })
   } catch (error) {
     console.error("[v0] Error fetching applications:", error)
