@@ -1,6 +1,5 @@
 const fs = require("fs").promises
 const path = require("path")
-const fetch = window.fetch // Using built-in fetch instead of node-fetch
 
 const APPLICATIONS_FILE = path.join(process.cwd(), "data", "applications.json")
 
