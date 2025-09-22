@@ -26,47 +26,8 @@ export function OrganizationCard({ organization }: OrganizationCardProps) {
       duration: string
     },
   ) => {
-    if (!applicantData) {
-      // If no applicant data provided, open modal for detailed application
-      setIsModalOpen(true)
-      return
-    }
-
-    try {
-      const applicationData = {
-        applicantName: applicantData.name,
-        applicantEmail: applicantData.email,
-        organizationName: organization.name,
-        opportunityTitle: opportunityTitle,
-        opportunityType: organization.opportunities.find((opp) => opp.title === opportunityTitle)?.type || "volunteer",
-        location: organization.location,
-        focusArea: organization.themes.join(", "),
-        startDate: applicantData.startDate,
-        endDate: applicantData.endDate,
-        duration: applicantData.duration,
-      }
-
-      const response = await fetch("/api/applications", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(applicationData),
-      })
-
-      const result = await response.json()
-
-      if (result.success) {
-        alert(
-          `Alhamdulillah! Your application has been submitted successfully. Application ID: ${result.applicationId}`,
-        )
-      } else {
-        alert("Sorry, there was an error submitting your application. Please try again.")
-      }
-    } catch (error) {
-      console.error("Error submitting application:", error)
-      alert("Sorry, there was an error submitting your application. Please try again.")
-    }
+    const googleFormUrl = "https://forms.gle/FHirPbejNSDV87Lx5"
+    window.open(googleFormUrl, "_blank")
   }
 
   return (
@@ -141,7 +102,7 @@ export function OrganizationCard({ organization }: OrganizationCardProps) {
               onClick={() => handleApply(organization.opportunities[0].title)}
             >
               <Mail className="h-4 w-4 mr-2" />
-              Apply - {organization.opportunities[0].title}
+              Apply via Google Form
             </Button>
           )}
         </CardFooter>

@@ -82,53 +82,15 @@ export function CalendarSelection({
   }
 
   const handleSubmitApplication = async () => {
-    if (!startDate || !endDate || !applicantName || !applicantEmail) return
-
-    setIsSubmitting(true)
-
-    try {
-      const applicationData = {
-        applicantName: applicantName,
-        applicantEmail: applicantEmail,
-        organizationName: organization.name,
-        opportunityTitle: opportunity.title,
-        opportunityType: opportunity.type,
-        location: organization.location,
-        focusArea: organization.themes.join(", "),
-        startDate: startDate.toISOString().split("T")[0],
-        endDate: endDate.toISOString().split("T")[0],
-        duration: calculateDuration() || "",
-      }
-
-      const response = await fetch("/api/applications", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(applicationData),
-      })
-
-      const result = await response.json()
-
-      if (result.success) {
-        alert(
-          `Alhamdulillah! Your application has been submitted successfully.\n\nApplication ID: ${result.applicationId}\n\nYou will be contacted at ${applicantEmail} regarding next steps.\n\nBarakAllahu feekum for your interest in volunteering!`,
-        )
-        onClose()
-      } else {
-        alert(
-          `Sorry, there was an error submitting your application: ${result.message || "Unknown error"}. Please try again.`,
-        )
-      }
-    } catch (error) {
-      console.error("Application submission error:", error)
-      alert("Sorry, there was a network error submitting your application. Please check your connection and try again.")
-    } finally {
-      setIsSubmitting(false)
+    if (!applicantName || !applicantEmail) {
+      alert("Please fill in your name and email address.")
+      return
     }
-  }
 
-  const isFormValid = startDate && endDate && applicantName.trim() && applicantEmail.trim()
+    const googleFormUrl = "https://forms.gle/FHirPbejNSDV87Lx5"
+    window.open(googleFormUrl, "_blank")
+    onClose()
+  }
 
   return (
     <div className="space-y-6">
@@ -280,9 +242,13 @@ export function CalendarSelection({
               </div>
 
               <div className="flex gap-3 pt-4">
-                <Button className="flex-1" onClick={handleSubmitApplication} disabled={!isFormValid || isSubmitting}>
+                <Button
+                  className="flex-1"
+                  onClick={handleSubmitApplication}
+                  disabled={!applicantName.trim() || !applicantEmail.trim()}
+                >
                   <Send className="mr-2 h-4 w-4" />
-                  {isSubmitting ? "Submitting..." : "Submit Application"}
+                  Apply via Google Form
                 </Button>
                 <Button variant="outline" onClick={onBack}>
                   Cancel

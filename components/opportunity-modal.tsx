@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { Clock, MapPin, CheckCircle, ArrowRight } from "lucide-react"
 import type { Organization, Opportunity } from "@/lib/data"
-import { CalendarSelection } from "@/components/calendar-selection"
+// import { CalendarSelection } from "@/components/calendar-selection"
 
 interface OpportunityModalProps {
   organization: Organization
@@ -22,8 +22,8 @@ export function OpportunityModal({ organization, isOpen, onClose, onApply }: Opp
   const [showCalendar, setShowCalendar] = useState(false)
 
   const handleSelectOpportunity = (opportunity: Opportunity) => {
-    setSelectedOpportunity(opportunity)
-    setShowCalendar(true)
+    const googleFormUrl = "https://forms.gle/FHirPbejNSDV87Lx5"
+    window.open(googleFormUrl, "_blank")
   }
 
   const handleBackToList = () => {
@@ -105,7 +105,7 @@ export function OpportunityModal({ organization, isOpen, onClose, onApply }: Opp
                     <Separator className="my-4" />
 
                     <Button className="w-full" onClick={() => handleSelectOpportunity(opportunity)}>
-                      Apply for this {opportunity.type}
+                      Apply via Google Form
                       <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>
                   </CardContent>
@@ -114,15 +114,16 @@ export function OpportunityModal({ organization, isOpen, onClose, onApply }: Opp
             </div>
           </div>
         ) : (
-          selectedOpportunity && (
-            <CalendarSelection
+          selectedOpportunity &&
+          {
+            /* <CalendarSelection
               opportunity={selectedOpportunity}
               organization={organization}
               onBack={handleBackToList}
               onClose={onClose}
               onApply={onApply}
-            />
-          )
+            /> */
+          }
         )}
       </DialogContent>
     </Dialog>

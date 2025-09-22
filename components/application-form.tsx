@@ -59,52 +59,8 @@ export function ApplicationForm({
   }
 
   const handleSubmit = () => {
-    const duration = calculateDuration()
-    const subject = `${opportunity.type === "volunteer" ? "Volunteer" : "Internship"} Application: ${opportunity.title}`
-
-    const body = `Dear ${organization.name} Team,
-
-I am writing to express my interest in the ${opportunity.title} ${opportunity.type} position at your organization.
-
-APPLICANT INFORMATION:
-- Name: ${formData.fullName}
-- Email: ${formData.email}
-- Phone: ${formData.phone}
-
-APPLICATION DETAILS:
-- Position: ${opportunity.title}
-- Type: ${opportunity.type}
-- Theme: ${opportunity.theme}
-- Start Date: ${formatDate(startDate)}
-- End Date: ${formatDate(endDate)}
-- Duration: ${duration}
-- Location: ${opportunity.remote ? "Remote" : "On-site"}
-
-MOTIVATION:
-${formData.motivation}
-
-RELEVANT EXPERIENCE:
-${formData.experience}
-
-AVAILABILITY:
-${formData.availability}
-
-I am excited about the opportunity to contribute to your mission and would welcome the chance to discuss my application further.
-
-Thank you for your consideration.
-
-Best regards,
-${formData.fullName}
-${formData.email}
-${formData.phone}`
-
-    // Try to extract email from website domain
-    const domain = organization.website.replace(/https?:\/\//, "").split("/")[0]
-    const orgEmail = `info@${domain}`
-
-    const mailtoLink = `mailto:${orgEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
-
-    window.open(mailtoLink, "_blank")
+    const googleFormUrl = "https://forms.gle/FHirPbejNSDV87Lx5"
+    window.open(googleFormUrl, "_blank")
     onClose()
   }
 
@@ -249,7 +205,7 @@ ${formData.phone}`
             </div>
 
             <p className="text-xs text-muted-foreground">
-              * Required fields. Your application will be sent via email to the organization.
+              * Required fields. Your application will be sent via Google Form to the organization.
             </p>
           </CardContent>
         </Card>
